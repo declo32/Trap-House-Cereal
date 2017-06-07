@@ -13,13 +13,14 @@ First, let's define a rectangular prism:
 
 
 ```python
-class rectangularPrism:
+class RectangularPrism:
     
     def __init__(self, l, w, h):  # What it needs to know to start itself
         self.l = l
         self.w = w
         self.h = h
 
+    # Each of the following functions defines a property of the prism based on l, w, & h
     def base(self):
         B = self.l * self.w
         return B
@@ -51,11 +52,13 @@ def cost(area):
 
 ```
 
-Now we can look at some properties of the old, boring cereal box:
+<hr>
+
+Now we can look at some properties of that boring old cereal box:
 
 
 ```python
-box = rectangularPrism(6, 1, 10)
+box = RectangularPrism(6, 1, 10)
 print("Surface Area:", box.surfaceArea())
 print("Cost:        ", cost(box.surfaceArea()))
 print("Volume:      ", box.volume())
@@ -79,7 +82,7 @@ Let's define an isosceles trapezoidal prism:
 import math  # For the sqrt function
 
 
-class isoscelesTrapezoidalPrism:
+class IsoscelesTrapezoidalPrism:
     
     def __init__(self, b1, b2, h, d):
         self.b1 = b1  # base 1
@@ -115,7 +118,7 @@ class isoscelesTrapezoidalPrism:
 
 
 ```python
-box = isoscelesTrapezoidalPrism(5, 11, 3, 3)
+box = IsoscelesTrapezoidalPrism(5, 11, 3, 3)
 print(box.surfaceArea())
 print(cost(box.surfaceArea()))
 print(box.volume())
@@ -139,108 +142,40 @@ Before we can optimize, we need to define what it is that we want to minimize. I
 
 ```python
 def foo(x):  # x will be a list of values, describing the dimensions of a trapezoidal prism
-    box = isoscelesTrapezoidalPrism(x[0], x[1], x[2], x[3])
+    box = IsoscelesTrapezoidalPrism(x[0], x[1], x[2], x[3])
     return cost(box.surfaceArea()) / box.volume()
 
 ```
 
-Now we need to define any constraints. The box must have the same volume as the old one, which was shown to be 60in<sup>2</sup>.
+Now we need to define any constraints. The box must have the same volume as the old one, which was shown to be 60in<sup>2</sup>.  Also, all the measurements must be positive.
 
 
 ```python
 def constraint1(x):
     return 60.  # That was easier than I thought
 
+
+def constraint2(x):
+    for el in x:
+        if el <= 0:
+            return False
+    return True
+
 ```
 
 
 ```python
-x0 = np.zeros(4)  # Four zeros as the placeholders for the dimensions
+x0 = np.array([5, 11, 3, 3])  # Four zeros as the placeholders for the dimensions
 res = minimize(foo, x0, method="nelder-mead",
                options={"xtol": 1e-8, "disp": True},
                constraints={"type": "eq", "fun": constraint1})
 print(res.x)
 ```
 
-    Optimization terminated successfully.
-             Current function value: 0.000000
-             Iterations: 20
-             Function evaluations: 99
-    [  3.12500000e-05   3.12500000e-05   3.12500000e-05   1.25000000e-04]
-    
-
     C:\Anaconda3\lib\site-packages\scipy\optimize\_minimize.py:394: RuntimeWarning: Method nelder-mead cannot handle constraints nor bounds.
       RuntimeWarning)
     
 
-
-```python
-x0 = np.zeros(4)  # Placeholders for the dimensions (b1, b1, h, depth)
-
-def foo(x):  # function to be minimized
-    for dim in x:
-        if dim <= 0:
-            return float("inf")  # If a number is negative, return infinity (a very high number)
-    
-    box = isoscelesTrapezoidalPrism(x[0], x[1], x[2], x[3])  # get the individual elements of x
-    return cost(box.surfaceArea())
-
-res = minimize(foo, x0, method="nelder-mead", options={"xtol": 1e-8, "disp": True})  # using nelder-mead meathod
-
-```
-
-    Optimization terminated successfully.
-             Current function value: 0.000000
-             Iterations: 20
-             Function evaluations: 99
-    
-
-
-```python
-print(res.x)
-```
-
-    [  3.12500000e-05   3.12500000e-05   3.12500000e-05   1.25000000e-04]
-    
-
-We won't be able to make measurements that precise, so I'll round them down:
-
-
-```python
-print([round(x, 2) for x in res.x])
-```
-
-    [0.0, 0.0, 0.0, 0.0]
-    
-
-Woops, all that did was minimize the surface area! I should have been more thoughtful with the `foo` function.
-
-
-```python
-def foo(x):  # function to be minimized
-    for dim in x:
-        if dim <= 0:
-            return float("inf")  # If a number is negative, return infinity (a very high number)
-    
-    box = isoscelesTrapezoidalPrism(x[0], x[1], x[2], x[3])  # get the individual elements of x
-    return cost(box.surfaceArea()) / box.volume()
-```
-
-This returns the *ratio* of cost to volume.
-
-
-```python
-x0 = np.array([50, 50, 50, 50])
-res = minimize(foo, x0, method="nelder-mead", options={"xtol": 1e-8, "disp": True, "maxfev": math.inf})
-```
-
-    Warning: Maximum number of iterations has been exceeded.
-    
-
-
-```python
-print(res.x)
-```
-
-    [  8.65876880e+73   1.53937495e+74   1.33370373e+73   1.51573412e+75]
+    Warning: Maximum number of function evaluations has been exceeded.
+    [  1.49477007e+50   8.19133853e+49  -4.65348987e+50   6.40412415e+50]
     
