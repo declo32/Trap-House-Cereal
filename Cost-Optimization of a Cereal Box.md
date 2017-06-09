@@ -55,6 +55,7 @@ Now we can look at some properties of that boring old cereal box:
 
 ```python
 box = RectangularPrism(6, 1, 10)
+
 print("Surface Area:", box.surfaceArea())
 print("Cost:        ", cost(box.surfaceArea()))
 print("Volume:      ", box.volume())
@@ -81,8 +82,8 @@ import math  # For the sqrt function
 class IsoscelesTrapezoidalPrism:
     
     def __init__(self, b1, b2, h, d):
-        self.b1 = b1  # base 1
-        self.b2 = b2  # base 2
+        self.b1 = b1  # base 1 (smaller)
+        self.b2 = b2  # base 2 (larger)
         self.h = h    # height
         self.d = d    # depth
 
@@ -91,7 +92,7 @@ class IsoscelesTrapezoidalPrism:
         return B
     
     def diagonal(self):
-        D = math.sqrt(self.h**2 + (0.5 * (self.b1 - self.b2))**2)  # Pythagoran theorem
+        D = math.sqrt(self.h**2 + (-0.5 * (self.b1 - self.b2))**2)
         return D
 
     def perimeter(self):
@@ -112,27 +113,85 @@ class IsoscelesTrapezoidalPrism:
 
 ```
 
-Alright, here's some guess dimensions for the box:
+A tricky part about making this is defining how to find the length of a diagonals using only $B_1$, $B_2$, $h$. But we can figure this out with some logic:
+<img src="files/img/Labeled B1 B2 x.png">
+<table style="width:90%">
+ <tr>
+  <th>Statement</th>
+  <th>Reason</th>
+ </tr>
+ <tr>
+  <td>Trapedoid $T$ is an isosceles trapezoid with bases $B_1$, $B_2$ and with height $h$.</td>
+  <td>Given</td>
+ </tr>
+ <tr>
+  <td>Both heights in trapezoid $T$ are perpendicular to both bases; $B_1 ∥ B_2$</td>
+  <td>Def. of an isosceles trap.</td>
+ </tr>
+ <tr>
+  <td>Both heights are parallel to each other</td>
+  <td>Two segments perpendicular to the same line are parallel</td>
+ </tr>
+ <tr>
+  <td>$B_1 = B_2 - 2x$</td>
+  <td>Two parallel segments contained between two parallel segments are congruent</td>
+ </tr>
+ <tr>
+  <td>
+   $-2x + B_2 = B_1$
+   <br><br>
+   $-2x = B_1 - B_2$
+   <br><br>
+   $x = \frac{B_1 - B_2}{-2}$
+  </td>
+  <td>Solving for $x$</td>
+ </tr>
+ <tr>
+  <td>$D^2 = h^2 + x^2$</td>
+  <td>Pythagorean theorem</td>
+ </tr>
+ <tr>
+  <td>$D^2 = h^2 + (\frac{B_1 - B_2}{-2})^2$</td>
+  <td>Substitution Property of Equality</td>
+ </tr>
+ <tr>
+  <td>$D = \sqrt{h^2 + (\frac{B_1 - B_2}{-2})^2}$</td>
+  <td>Solving for $D$</td>
+ </tr>
+</table>
+
+Cool, so $D = \sqrt{h^2 + (\frac{B_1 - B_2}{-2})^2}$, or as it was written above, `D = math.sqrt(self.h**2 + (-0.5 * (self.b1 - self.b2))**2)`.
+
+<hr>
+
+After making this, we tested various dimensions until we found some that worked:
 
 
 ```python
-box = IsoscelesTrapezoidalPrism(5, 11, 3, 3)
-print("Surface Area:", box.surfaceArea())
-print("Cost:        ", cost(box.surfaceArea()))
-print("Volume:      ", box.volume())
+box = IsoscelesTrapezoidalPrism(b1=5, b2=11, h=3, d=3)
+
+print("Diagonal Length:", box.diagonal())
+print("Surface Area:   ", box.surfaceArea())
+print("Cost:           ", cost(box.surfaceArea()))
+print("Volume:         ", box.volume())
 ```
 
-    Surface Area: 121.4558441227157
-    Cost:         0.49
-    Volume:       72.0
+    Diagonal Length: 4.242640687119285
+    Surface Area:    121.4558441227157
+    Cost:            0.49
+    Volume:          72.0
     
 
-Wow, that works! But we can do better...
+# Everything after this doesn't apply to the project, I ran out of time...
 
-To find better dimensions, we can use `scipy.optimize`.
+Sure that works, but we can do better...
+
+To find better dimensions, we'll use `scipy.optimize`.
 
 
 ```python
+# Here we're grabbing the tools we need to do complex math stuff
+
 import numpy as np
 from scipy.optimize import minimize
 ```
@@ -172,10 +231,10 @@ res = minimize(foo, x0, method="nelder-mead",
 print(res.x)
 ```
 
-    Warning: Maximum number of function evaluations has been exceeded.
-    [  1.49477007e+50   8.19133853e+49  -4.65348987e+50   6.40412415e+50]
-    
-
     C:\Anaconda3\lib\site-packages\scipy\optimize\_minimize.py:394: RuntimeWarning: Method nelder-mead cannot handle constraints nor bounds.
       RuntimeWarning)
+    
+
+    Warning: Maximum number of function evaluations has been exceeded.
+    [  1.49477007e+50   8.19133853e+49  -4.65348987e+50   6.40412415e+50]
     
